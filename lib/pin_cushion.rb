@@ -119,6 +119,36 @@ class ActiveRecord::Migration
       # For some reason the CREATE RULE .. ON DELETE TO will only execute a single statement
       # This trigger takes care of deleting the record from the parent table after the record on the child table is deleted via the aforementioned DELETE rule
       execute "CREATE TRIGGER #{table_prefix + table_name}_del_trigger BEFORE DELETE ON #{table_name} FOR EACH ROW EXECUTE PROCEDURE #{table_prefix + table_name}_del_function();"
+
+      # Rails 3 active record has changed. Now it needs to get the pkey of the table before. This doesn't work on views.
+      # These scripts will fool it into working.
+      execute "INSERT INTO pg_depend(classid, objid, objsubid, refclassid, refobjid, refobjsubid, deptype)
+	       SELECT dep.classid, dep.objid, dep.objsubid, dep.refclassid, '\"#{table_prefix}#{table_name}\"'::regclass, dep.refobjsubid, dep.deptype
+	        FROM pg_class seq
+		JOIN pg_depend dep on seq.oid = dep.objid
+		JOIN pg_attribute attr on attr.attrelid = dep.refobjid
+		     AND attr.attnum = dep.refobjsubid
+		JOIN pg_constraint cons on attr.attrelid = cons.conrelid
+		     AND attr.attnum = cons.conkey[1]
+	       WHERE seq.relkind = 'S'
+		 AND cons.contype = 'p'
+		 AND dep.refobjid = '\"#{supertable_name}\"'::regclass;"
+
+      execute "INSERT INTO pg_constraint(conname, connamespace, contype, condeferrable, condeferred, convalidated, conrelid, contypid,
+			  conindid, confrelid, confupdtype, confdeltype, confmatchtype, conislocal, coninhcount, conkey,
+			  confkey, conpfeqop, conppeqop, conffeqop, conexclop, conbin, consrc)
+	       SELECT conname, connamespace, contype, condeferrable, condeferred, convalidated, '\"#{table_prefix}#{table_name}\"'::regclass, contypid,
+		       conindid, confrelid, confupdtype, confdeltype, confmatchtype, conislocal, coninhcount, conkey,
+		       confkey, conpfeqop, conppeqop, conffeqop, conexclop, conbin, consrc
+	        FROM pg_class seq
+		JOIN pg_depend dep on seq.oid = dep.objid
+		JOIN pg_attribute attr on attr.attrelid = dep.refobjid
+		     AND attr.attnum = dep.refobjsubid
+		JOIN pg_constraint cons on attr.attrelid = cons.conrelid
+		     AND attr.attnum = cons.conkey[1]
+	       WHERE seq.relkind = 'S'
+		 AND cons.contype = 'p'
+		 AND dep.refobjid = '\"#{supertable_name}\"'::regclass"
     end
 
     def DropMTIFor(classname, options={})
@@ -136,6 +166,41 @@ class ActiveRecord::Migration
       supertable_name = options[:supertable_name]
       table_name = options[:table_name]
       table_prefix = options[:table_prefix]
+
+      # undo our sequence dependency hack
+      execute "DELETE FROM pg_constraint
+	       USING pg_class seq,
+		     pg_depend dep,
+		     pg_attribute attr
+	       WHERE seq.oid = dep.objid
+		 AND attr.attrelid = dep.refobjid 
+                 AND attr.attnum = dep.refobjsubid 
+                 AND attr.attrelid = pg_constraint.conrelid
+		 AND attr.attnum = pg_constraint.conkey[1]
+		 AND seq.relkind = 'S'
+		 AND pg_constraint.contype = 'p'
+		 AND dep.refobjid = '\"#{table_prefix}#{table_name}\"'::regclass;"
+
+      execute "DELETE FROM pg_depend
+	       USING pg_class seq,
+		     pg_attribute attr,
+		     pg_constraint cons,
+		     pg_depend dep
+	       WHERE seq.oid = dep.objid
+	         AND attr.attrelid = dep.refobjid
+                 AND attr.attnum = dep.refobjsubid
+                 AND attr.attrelid = cons.conrelid
+		 AND attr.attnum = cons.conkey[1]
+		 AND seq.relkind = 'S'
+		 AND cons.contype = 'p'
+		 AND dep.refobjid = '\"#{supertable_name}\"'::regclass
+		 AND pg_depend.refobjid = '\"#{table_prefix}#{table_name}\"'::regclass
+                 AND dep.classid = pg_depend.classid
+                 AND dep.objid = pg_depend.objid
+                 AND dep.objsubid = pg_depend.objsubid
+                 AND dep.refclassid = pg_depend.refclassid
+                 AND dep.refobjsubid = pg_depend.refobjsubid
+		 AND dep.deptype = pg_depend.deptype;"
 
       execute "DROP TRIGGER #{table_prefix + table_name}_del_trigger ON #{table_name};"
       execute "DROP FUNCTION #{table_prefix + table_name}_del_function();"
