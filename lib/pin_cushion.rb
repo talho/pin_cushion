@@ -240,7 +240,7 @@ module PinCushion
           end
         end
       else
-        set_table_name "view_#{self.to_s.pluralize.underscore}"
+        self.table_name = "view_#{self.to_s.pluralize.underscore}"
       end
       inheritance_column = "#{self.class.to_s}_type"
 
