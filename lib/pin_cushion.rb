@@ -134,10 +134,10 @@ class ActiveRecord::Migration
 		 AND cons.contype = 'p'
 		 AND dep.refobjid = '\"#{supertable_name}\"'::regclass;"
 
-      execute "INSERT INTO pg_constraint(conname, connamespace, contype, condeferrable, condeferred, convalidated, conrelid, contypid,
+      execute "INSERT INTO pg_constraint(conname, connamespace, contype, condeferrable, condeferred, conrelid, contypid,
 			  conindid, confrelid, confupdtype, confdeltype, confmatchtype, conislocal, coninhcount, conkey,
 			  confkey, conpfeqop, conppeqop, conffeqop, conexclop, conbin, consrc)
-	       SELECT conname, connamespace, contype, condeferrable, condeferred, convalidated, '\"#{table_prefix}#{table_name}\"'::regclass, contypid,
+	       SELECT conname, connamespace, contype, condeferrable, condeferred, '\"#{table_prefix}#{table_name}\"'::regclass, contypid,
 		       conindid, confrelid, confupdtype, confdeltype, confmatchtype, conislocal, coninhcount, conkey,
 		       confkey, conpfeqop, conppeqop, conffeqop, conexclop, conbin, consrc
 	        FROM pg_class seq
