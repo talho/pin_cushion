@@ -134,12 +134,15 @@ class ActiveRecord::Migration
 		 AND cons.contype = 'p'
 		 AND dep.refobjid = '\"#{supertable_name}\"'::regclass;"
 
+      extra_cols = execute("select column_name from INFORMATION_SCHEMA.COLUMNS where table_name = 'pg_constraint' and column_name = 'convalidated';").count > 0
+      col_string = ",convalidated,conindid,conexclop"
+
       execute "INSERT INTO pg_constraint(conname, connamespace, contype, condeferrable, condeferred, conrelid, contypid,
 			  confrelid, confupdtype, confdeltype, confmatchtype, conislocal, coninhcount, conkey,
-			  confkey, conpfeqop, conppeqop, conffeqop, conbin, consrc)
+			  confkey, conpfeqop, conppeqop, conffeqop, conbin, consrc#{extra_cols ? col_string : ''})
 	       SELECT conname, connamespace, contype, condeferrable, condeferred, '\"#{table_prefix}#{table_name}\"'::regclass, contypid,
 		       confrelid, confupdtype, confdeltype, confmatchtype, conislocal, coninhcount, conkey,
-		       confkey, conpfeqop, conppeqop, conffeqop, conbin, consrc
+		       confkey, conpfeqop, conppeqop, conffeqop, conbin, consrc#{extra_cols ? col_string : ''}
 	        FROM pg_class seq
 		JOIN pg_depend dep on seq.oid = dep.objid
 		JOIN pg_attribute attr on attr.attrelid = dep.refobjid
