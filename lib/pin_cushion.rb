@@ -46,7 +46,7 @@ class ActiveRecord::Migration
 
       # PostgreSQL's returning statement must return a sequence of columns equivalent to the view.
       execute "CREATE TYPE #{table_prefix + table_name}_type AS (#{ActiveRecord::Base.connection.columns(table_prefix + table_name).map{|column|
-        column.name + ' ' + case column.type.to_s
+        "\"#{column.name}\" " + case column.type.to_s
           when 'boolean'
             'boolean'
           when 'integer'
@@ -90,7 +90,7 @@ class ActiveRecord::Migration
             'NEW.' + column
           end
         }.join(',')}) \
-        RETURNING #{ActiveRecord::Base.connection.columns(table_prefix + table_name).map{|column| '(SELECT ' + column.name + ' FROM GetInserted' + class_name + '(currval(\'' + sequence_name + '\')))'}.join(',')});"
+        RETURNING #{ActiveRecord::Base.connection.columns(table_prefix + table_name).map{|column| '(SELECT "' + column.name + '" FROM GetInserted' + class_name + '(currval(\'' + sequence_name + '\')))'}.join(',')});"
 
       # Since PostgreSQL doesn't yet support updates on a view with table joins, we are creating a rule to intercept the UPDATE and
       # manually update the records in the individual tables
@@ -98,8 +98,8 @@ class ActiveRecord::Migration
       # on the very first update which caused ActiveRecord to throw a StableObject error when records were created that have callbacks
       # since ActiveRecord does an updated after insert for those callbacks
       execute "CREATE OR REPLACE RULE #{table_prefix + table_name}_upd AS ON UPDATE TO #{table_prefix + table_name} DO INSTEAD ( \
-        UPDATE #{table_name} SET #{(table_columns - exclusions).map{|column| column + '=NEW.' + column}.join(',')} WHERE #{foreign_key}=OLD.id; \
-        UPDATE #{supertable_name} SET #{(supertable_columns - ['id',superclass_name.downcase + '_type']).map{|column| column + '=NEW.' + column}.join(',')} WHERE id=OLD.id;);"
+        UPDATE #{table_name} SET #{(table_columns - exclusions).map{|column| '"' + column + '"' + '=NEW.' + column}.join(',')} WHERE #{foreign_key}=OLD.id; \
+        UPDATE #{supertable_name} SET #{(supertable_columns - ['id',superclass_name.downcase + '_type']).map{|column| '"' + column + '"' + '=NEW.' + column}.join(',')} WHERE id=OLD.id;);"
 
       # Since PostgreSQL doesn't yet support deletes on a view with table joins, we are creating a rule to intercept the DELETE and
       # manually delete the child table record
@@ -121,7 +121,7 @@ class ActiveRecord::Migration
       execute "CREATE TRIGGER #{table_prefix + table_name}_del_trigger BEFORE DELETE ON #{table_name} FOR EACH ROW EXECUTE PROCEDURE #{table_prefix + table_name}_del_function();"
 
       # Rails 3 active record has changed. Now it needs to get the pkey of the table before. This doesn't work on views.
-      # These scripts will fool it into working.
+      # These scripts will fool it into working. NOTE: To run the migrations, the DBO must be the user you are connecting with.
       execute "INSERT INTO pg_depend(classid, objid, objsubid, refclassid, refobjid, refobjsubid, deptype)
 	       SELECT dep.classid, dep.objid, dep.objsubid, dep.refclassid, '\"#{table_prefix}#{table_name}\"'::regclass, dep.refobjsubid, dep.deptype
 	        FROM pg_class seq
