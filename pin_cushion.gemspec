@@ -8,5 +8,5 @@ Gem::Specification.new { |s|
   s.platform = Gem::Platform::RUBY
   s.summary = "Database-level Multitable Inheritance for Rails"
   s.files = Dir.glob("{lib,sample,test}/**/*")
-  s.require_path = "lib"
+  s.require_path = "lib/pin_cushion"
 }
