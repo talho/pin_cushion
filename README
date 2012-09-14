@@ -89,4 +89,4 @@ After migrations are run, the two tables should look like one under the child mo
 > User.first
 => nil
 
-Copyright (c) 2011 Ethan Waldo, released under the MIT license
+Copyright (c) 2012 TALHO, released under the MIT license
