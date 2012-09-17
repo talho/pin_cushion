@@ -1,7 +1,7 @@
 require 'rubygems'
 Gem::Specification.new { |s|
   s.name = "pin_cushion"
-  s.version = "0.1"
+  s.version = "2.0"
   s.date = "2011-06-06"
   s.author = "Ethan Waldo"
   s.homepage = "https://github.com/Dishwasha/pin_cushion"
