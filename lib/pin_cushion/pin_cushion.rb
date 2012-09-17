@@ -1,6 +1,6 @@
-module PinCushion
-  
-  
+require 'mti'
+      
+module PinCushion  
   def self.included(base)
     base.send :extend, ClassMethods
   end
@@ -18,7 +18,6 @@ module PinCushion
       @table_name = "view_#{additional_table_name || (self.send :undecorated_table_name, self.to_s)}"
       
       # include the overrides required for MTI. Preferably don't monkeypatch
-      require 'mti'
       self.send :include, PinCushion::MTI
       
       @@pin_cushion_classes << self            

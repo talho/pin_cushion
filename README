@@ -95,6 +95,15 @@ Migrations
 
 ActiveRecord::Migration has had these helper methods added:
 
-create_mti_view(klass) - creates a view for the MTI
+create_mti_view(klass) - creates or replaces a view for the MTI class specified
+create_mti_views       - creates or replaces views for all MTI classes in the system
+drop_mti_view(klass)   - drops the view for the MTI class specified
+drop_mti_views         - drops all MTI views
+RemoveMTIFor(classname, options = {}) - removes the old MTI way of doing things. This includes dropping the triggers, views, etc. Use this to cleanup when upgrading from the first version of Pin Cushion to Pin Cushion 2.0
+
+Additional Options
+==================
+
+acts_as_MTI(table_name) - specify a custom table name for the MTI. This accepts a string or symbol. In the future, this may also support an array to allow for MTI across multiple tables at the same level.
 
 Copyright (c) 2012 TALHO, released under the MIT license
