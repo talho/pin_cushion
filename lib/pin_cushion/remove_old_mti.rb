@@ -1,6 +1,9 @@
 module PinCushion
   module RemoveOldMTI 
   
+    def CreateMTIFor(*args)
+    end
+  
     def RemoveMTIFor(classname, options={})
       options[:superclass_name] ||= classname.superclass.to_s
       options[:class_name] = classname.to_s
