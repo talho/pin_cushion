@@ -3,6 +3,9 @@ module PinCushion
   
     def CreateMTIFor(*args)
     end
+    
+    def DropMTIFor(*args)
+    end
   
     def RemoveMTIFor(classname, options={})
       options[:superclass_name] ||= classname.superclass.to_s
