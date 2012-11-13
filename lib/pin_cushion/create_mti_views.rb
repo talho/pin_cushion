@@ -1,10 +1,7 @@
 module PinCushion
   module CreateMTIViews
     def create_mti_view klass
-      begin
-        execute "CREATE OR REPLACE VIEW #{klass.table_name} AS #{klass.mti_view_sql}" if ActiveRecord::Base.connection.table_exists? klass.base_table_name
-      rescue
-      end
+      execute "CREATE OR REPLACE VIEW #{klass.table_name} AS #{klass.mti_view_sql}" if ActiveRecord::Base.connection.table_exists? klass.base_table_name
     end
     
     # we're just going to go through and create all of the MTI views
