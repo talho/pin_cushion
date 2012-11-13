@@ -43,7 +43,7 @@ module PinCushion
           additional_table_names.each do |table_name|
             columns_table_hash[table_name] = connection.schema_cache.columns[table_name].map do |col|
               col.dup
-            end.select { |c| columns_table_hash.values.flatten.index {|v| c.name == v.name }.nil? } if ActiveRecord::Base.connection.table_exists? table_name
+            end.select { |c| columns_table_hash.values.flatten.index {|v| c.name == v.name }.nil? }
           end unless @additional_table_names.nil?
           
           columns_table_hash
