@@ -13,7 +13,7 @@ module PinCushion
         ["SELECT #{self.columns_table_hash.map{|k, v| v.map { |c| "#{k}.#{c.name}"} }.reject(&:blank?).join(',')}",
          "FROM #{self.base_table_name}",
          self.additional_table_names.map do |table|
-           "JOIN #{table} ON #{self.base_table_name}.id = #{table}.#{self.join_column}"
+           ActiveRecord::Base.connection.table_exists?(table) ? "JOIN #{table} ON #{self.base_table_name}.id = #{table}.#{self.join_column}" : '' 
          end.reject(&:blank?).join(' ')
         ].join(' ')
       end
